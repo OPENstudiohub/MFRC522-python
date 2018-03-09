@@ -35,16 +35,16 @@ while continue_reading:
     if status == MIFAREReader.MI_OK:
         print("Card detected")
 
-    # Get the UID of the card
+    # Get the UID of the card and convert uid to tuple for unpacking
     (status, uid) = MIFAREReader.MFRC522_Anticoll()
+    uid = tuple(uid)
 
     # If we have the UID, continue
     if status == MIFAREReader.MI_OK:
 
         # Print UID
-        print(type(uid))
-        print("Card read UID: " + str(uid[0]) + "," + str(uid[1]) + "," + str(uid[2]) + "," + str(uid[3]))
-        # print("Card read UID: {}, {}, {}, {}")
+        # print("Card read UID: " + str(uid[0]) + "," + str(uid[1]) + "," + str(uid[2]) + "," + str(uid[3]))
+        print("Card read UID: {}, {}, {}, {}".format(*uid))
 
         # This is the default key for authentication
         key = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]
