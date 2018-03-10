@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 # -*- coding: utf8 -*-
 
 import RPi.GPIO as GPIO
@@ -37,13 +37,12 @@ while continue_reading:
 
     # Get the UID of the card and convert uid to tuple for unpacking
     (status, uid) = MIFAREReader.MFRC522_Anticoll()
-    uid = tuple(uid)
 
     # If we have the UID, continue
     if status == MIFAREReader.MI_OK:
 
         # Print UID
-        # print("Card read UID: " + str(uid[0]) + "," + str(uid[1]) + "," + str(uid[2]) + "," + str(uid[3]))
+        uid = tuple(uid)
         print("Card read UID: {}, {}, {}, {}".format(*uid))
 
         # This is the default key for authentication

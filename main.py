@@ -5,18 +5,19 @@
 
 import MFRC522
 import RPi.GPIO as GPIO
+from string import hexdigits
 from osc_basics import osc_client
 
 
 def hexify(uid):
     hexs = tuple([hex(u) for u in uid])
 
-    return '{} {} {} {}'.format(*hexs)
+    return ' '.join(hexs)
 
 
 if __name__ == '__main__':
     MIFAREReader = MFRC522.MFRC522()
-    client = osc_client.OSCClient(host='raspberrypi.local')
+    client = osc_client.OSCClient(host='10.1.10.53')
     reading = True
 
     try:
@@ -36,8 +37,9 @@ if __name__ == '__main__':
             # if we have the UID, hexify it and send it over OSC
             if status == MIFAREReader.MI_OK:
                 hexuid = hexify(uid[0:4])
+                hexuid = ''.join(s.upper() if s in hexdigits else s for s in hexuid)
                 print('card UID: {}'.format(hexuid))
-                client.send(hexuid)
+                client.send([hexuid])  # osc_client is expecting a list
 
     except KeyboardInterrupt:
         print('\n...user exit received...')
