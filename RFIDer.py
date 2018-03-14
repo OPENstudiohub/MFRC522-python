@@ -4,6 +4,7 @@
 # 3/9/18
 # updated 3/14/18
 
+import logging
 import RPi.GPIO as GPIO
 from mfrc522 import MFRC522
 from string import hexdigits
@@ -12,7 +13,14 @@ from string import hexdigits
 class RFIDer:
 
     def __init__(self):
+        self.logger = self._initialize_logger()
         self.MIFAREReader = MFRC522.MFRC522()
+
+    def _initialize_logger(self):
+        logger = logging.getLogger('rfider')
+        logger.info('rfider logger instantiated')
+
+        return logger
 
     def _scan(self):
         '''scan for rfid cards and return True if one is found'''
@@ -20,13 +28,13 @@ class RFIDer:
         (status, TagType) = self.MIFAREReader.MFRC522_Request(self.MIFAREReader.PICC_REQIDL)
 
         if status == self.MIFAREReader.MI_OK:
-            print('card detected')
+            self.logger.info('card detected')
             return True
 
     def _hexify(self, uid):
         '''
-        currently MFRC522 returns id as ints,
-        but we want it represented as hexadecimal
+        currently MFRC522 returns id as ints, but we want it represented as hexadecimal
+        we also capitalize all letters but 'x' in the id
         '''
 
         hexs = tuple([hex(u) for u in uid])
@@ -38,7 +46,7 @@ class RFIDer:
         if status == self.MIFAREReader.MI_OK:
             hexuid = self._hexify(uid[0:4])
             hexuid = ''.join(s.upper() if s in hexdigits else s for s in hexuid)
-            print('card UID: {}'.format(hexuid))
+            self.logger.info('card UID: {}'.format(hexuid))
             return hexuid
 
     def read(self):

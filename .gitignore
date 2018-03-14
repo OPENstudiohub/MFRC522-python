@@ -1,4 +1,6 @@
+.DS_Store
 .AppleDouble/
-__pycache__/
 MFRC522.pyc
+rfidberry.log
+__pycache__/
 osc_basics/
