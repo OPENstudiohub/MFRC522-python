@@ -7,6 +7,14 @@ import spi
 # import time
 
 
+class AuthenticationError(Exception):
+    pass
+
+
+class StatusNotSuccessError(Exception):
+    pass
+
+
 class MFRC522:
     NRSTPD = 22
 
@@ -119,9 +127,39 @@ class MFRC522:
         self.Write_MFRC522(self.CommandReg, self.PCD_RESETPHASE)
 
     def Write_MFRC522(self, addr, val):
+        """
+        Writes the specified value to the specified register
+
+        The way SPI with MFRC522 registers works is to send an address byte and a data byte
+
+        For the address byte:
+        - the first/highest/"most significant" bit specifies read (1) or write(0)
+        - the next six bits specify the register address
+        - the final bit is reserved for future use, and should be set to 0
+
+        So, for writes, we left-shift the address by 1 (to make it line up in the middle
+        six bits), mask the MSB to be 0, and mask the LSB to be 0
+
+        The spi response is all garbage for writes
+        """
         spi.transfer(((addr << 1) & 0x7E, val))
 
     def Read_MFRC522(self, addr):
+        """
+        Reads the specified value from the specified register
+
+        The way SPI with MFRC522 registers works is to send an address byte and a data byte
+
+        For the address byte:
+        - the first/highest/"most significant" bit specifies read (1) or write(0)
+        - the next six bits specify the register address
+        - the final bit is reserved for future use, and should be set to 0
+
+        So, for reads, we left-shift the address by 1 (to make it line up in the middle
+        six bits), mask the MSB to be 1, and mask the LSB to be 0
+
+        The spi response is garbage for for the first byte, the requested data in the second byte
+        """
         val = spi.transfer((((addr << 1) & 0x7E) | 0x80, 0))
         return val[1]
 
@@ -164,15 +202,18 @@ class MFRC522:
 
         self.Write_MFRC522(self.CommandReg, self.PCD_IDLE)
 
-        while(i < len(sendData)):
-            self.Write_MFRC522(self.FIFODataReg, sendData[i])
-            i = i + 1
+        # while(i < len(sendData)):
+        #     self.Write_MFRC522(self.FIFODataReg, sendData[i])
+        #     i = i + 1
+        for element in sendData:
+            self.Write_MFRC522(self.FIFODataReg, element)
 
         self.Write_MFRC522(self.CommandReg, command)
 
         if command == self.PCD_TRANSCEIVE:
             self.SetBitMask(self.BitFramingReg, 0x80)
 
+        # Attempt to read data
         i = 2000
         while True:
             n = self.Read_MFRC522(self.CommIrqReg)
@@ -182,8 +223,10 @@ class MFRC522:
 
         self.ClearBitMask(self.BitFramingReg, 0x80)
 
+        # We broke out early, did we find data or hit an error?
         if i != 0:
             if (self.Read_MFRC522(self.ErrorReg) & 0x1B) == 0x00:
+                # No error, so looks like we're good
                 status = self.MI_OK
 
         if n & irqEn & 0x01:
@@ -307,16 +350,18 @@ class MFRC522:
         buff.append(BlockAddr)
 
         # Now we need to append the authKey which usually is 6 bytes of 0xFF
-        i = 0
-        while(i < len(Sectorkey)):
-            buff.append(Sectorkey[i])
-            i = i + 1
-        i = 0
+        # i = 0
+        # while(i < len(Sectorkey)):
+        #     buff.append(Sectorkey[i])
+        #     i = i + 1
+        # i = 0
+        buff += Sectorkey
 
         # Next we append the first 4 bytes of the UID
-        while(i < 4):
-            buff.append(serNum[i])
-            i = i + 1
+        # while(i < 4):
+        #     buff.append(serNum[i])
+        #     i = i + 1
+        buff += serNum[0:4]
 
         # Now we start the authentication itself
         (status, backData, backLen) = self.MFRC522_ToCard(self.PCD_AUTHENT, buff)
@@ -337,16 +382,20 @@ class MFRC522:
         recvData = []
         recvData.append(self.PICC_READ)
         recvData.append(blockAddr)
-        pOut = self.CalulateCRC(recvData)
-        recvData.append(pOut[0])
-        recvData.append(pOut[1])
+        crc = self.CalulateCRC(recvData)
+        recvData += crc
+
         (status, backData, backLen) = self.MFRC522_ToCard(self.PCD_TRANSCEIVE, recvData)
 
+        # if not(status == self.MI_OK):
+        #     print("Error while reading!")
+        # i = 0
+        # if len(backData) == 16:
+        #     print("Sector " + str(blockAddr) + " " + str(backData))
         if not(status == self.MI_OK):
-            print("Error while reading!")
-        i = 0
+            raise StatusNotSuccessError(status)
         if len(backData) == 16:
-            print("Sector " + str(blockAddr) + " " + str(backData))
+            return blockAddr, backData
 
     def MFRC522_Write(self, blockAddr, writeData):
         buff = []
@@ -358,40 +407,32 @@ class MFRC522:
         (status, backData, backLen) = self.MFRC522_ToCard(self.PCD_TRANSCEIVE, buff)
 
         if not(status == self.MI_OK) or not(backLen == 4) or not((backData[0] & 0x0F) == 0x0A):
-            status = self.MI_ERR
+            raise StatusNotSuccessError(status)
 
-        print(str(backLen) + " backdata &0x0F == 0x0A " + str(backData[0] & 0x0F))
+        buff = writeData[0:16]
+
+        crc = self.CalulateCRC(buff)
+        buff.append(crc[0])
+        buff.append(crc[1])
+        (status, backData, backLen) = self.MFRC522_ToCard(self.PCD_TRANSCEIVE, buff)
+
+        if not(status == self.MI_OK) or not(backLen == 4) or not((backData[0] & 0x0F) == 0x0A):
+            raise StatusNotSuccessError(status)
+
         if status == self.MI_OK:
-            i = 0
-            buf = []
-
-            while i < 16:
-                buf.append(writeData[i])
-                i = i + 1
-
-            crc = self.CalulateCRC(buf)
-            buf.append(crc[0])
-            buf.append(crc[1])
-            (status, backData, backLen) = self.MFRC522_ToCard(self.PCD_TRANSCEIVE, buf)
-
-            if not(status == self.MI_OK) or not(backLen == 4) or not((backData[0] & 0x0F) == 0x0A):
-                print("Error while writing")
-            if status == self.MI_OK:
-                print("Data written")
+            return True
 
     def MFRC522_DumpClassic1K(self, key, uid):
-        i = 0
-
-        while i < 64:
+        data = []
+        for i in range(0, 65):
             status = self.MFRC522_Auth(self.PICC_AUTHENT1A, i, key, uid)
-
             # Check if authenticated
             if status == self.MI_OK:
-                self.MFRC522_Read(i)
+                data.append(self.MFRC522_Read(i))
             else:
-                print("Authentication error")
+                raise StatusNotSuccessError(status)
 
-            i = i + 1
+        return data
 
     def MFRC522_Init(self):
         GPIO.output(self.NRSTPD, 1)
