@@ -44,8 +44,8 @@ def configure_logger(hostname):
 
 
 if __name__ == '__main__':
-    logger = configure_logger(get_hostname())
     host = '10.1.10.53'
+    logger = configure_logger(get_hostname())
     client = osc_client.OSCClient(host=host)
     rfider = RFIDer()
 
