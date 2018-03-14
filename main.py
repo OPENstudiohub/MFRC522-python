@@ -3,7 +3,7 @@
 # 3/9/18
 # updated 3/9/18
 
-import MFRC522
+from mfrc522 import MFRC522
 import RPi.GPIO as GPIO
 from string import hexdigits
 from osc_basics import osc_client
