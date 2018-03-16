@@ -1,4 +1,14 @@
-MFRC522-python
+wrapper around [MFRC522-python](https://github.com/mxgxw/MFRC522-python).
+currently reads RFID tags and returns their hexadecimal representation.
+to use 2 SPI readers on one Pi, instantiate RFIDer(num_devices=2).
+currently defaults to num_devices=1.
+
+main.py sends the UID of the scanned RFID tag in an OSC message. it uses osc_client from
+the [osc_basics repo](https://github.com/OPENstudiohub/osc_basics), which should be nested inside this repo
+
+original MFRC522 readme follows:
+
+#MFRC522-python
 ==============
 
 A small class to interface with the NFC reader Module MFRC522 on the Raspberry Pi.
