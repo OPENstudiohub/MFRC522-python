@@ -1,9 +1,10 @@
 #!/usr/bin/python3
 # send RFID id's over OSC
 # 3/9/18
-# updated 3/14/18
+# updated 3/15/18
 
 import os
+import spi
 import yaml
 import logging
 import logging.config
@@ -44,21 +45,24 @@ def configure_logger(hostname):
 
 
 if __name__ == '__main__':
-    host = '10.1.10.53'
+    host = '10.1.10.3'
     logger = configure_logger(get_hostname())
     client = osc_client.OSCClient(host=host)
-    rfider = RFIDer()
+    rfider = RFIDer(num_devices=2)
 
     try:
         reading = True
         logger.info('scanning for cards...')
 
         while reading:
-            uid = rfider.read()
+            for dev in rfider.devs:
+                spi.openSPI(device=dev)
+                uid = rfider.read()
+                spi.closeSPI()
 
-            if uid:
-                logger.info('sending uid {} to host {}'.format(uid, host))
-                client.send([uid])  # osc_client is expecting a list
+                if uid:
+                    logger.info('sending uid {} to host {}'.format(uid, host))
+                    client.send([uid])  # osc_client expects a list
 
     except KeyboardInterrupt:
         logger.info('...user exit received...')

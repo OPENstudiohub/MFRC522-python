@@ -2,7 +2,7 @@
 # rfid reader utility class for L300 built on MFRC522-python:
 # https://github.com/mxgxw/MFRC522-python
 # 3/9/18
-# updated 3/14/18
+# updated 3/15/18
 
 import logging
 import RPi.GPIO as GPIO
@@ -12,7 +12,9 @@ from string import hexdigits
 
 class RFIDer:
 
-    def __init__(self):
+    def __init__(self, num_devices=1):
+        self.num_devices = num_devices
+        self.devs = self._set_devs()
         self.logger = self._initialize_logger()
         self.MIFAREReader = MFRC522.MFRC522()
 
@@ -21,6 +23,9 @@ class RFIDer:
         logger.info('rfider logger instantiated')
 
         return logger
+
+    def _set_devs(self):
+        return ['/dev/spidev0.0', '/dev/spidev0.1'] if self.num_devices == 2 else ['/dev/spidev0.0']
 
     def _scan(self):
         '''scan for rfid cards and return True if one is found'''
