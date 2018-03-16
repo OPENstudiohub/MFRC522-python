@@ -11,6 +11,16 @@ from string import hexdigits
 
 
 class RFIDer:
+    '''
+    class that wraps around the MFRC522-python library for reading RFID tags.
+    logging is configured in main.py and log.yaml
+
+    we set the # of readers connected to SPI on the Pi via num_devices in __init__(),
+    then instantiate MFRC522 RFID reader instance. when RFIDer.read() is called,
+    we scan for cards, and if we find one we try to get the UID. if we get an id,
+    we convert it from int representation to hexadecimal and capitalize
+    all hex letters in the id, then return it
+    '''
 
     def __init__(self, num_devices=1):
         self.num_devices = num_devices
@@ -46,6 +56,10 @@ class RFIDer:
         return ' '.join(hexs)
 
     def _get_uid(self):
+        '''
+        get the UID from RFID tag, convert to hex, and capitalize all letters except 'x'
+        '''
+
         (status, uid) = self.MIFAREReader.MFRC522_Anticoll()
 
         if status == self.MIFAREReader.MI_OK:
@@ -55,7 +69,9 @@ class RFIDer:
             return hexuid
 
     def read(self):
-        '''return the uid if we have one'''
+        '''
+        return the uid if we have one. on user exit, clean up GPIO and reraise the exception
+        '''
 
         try:
             return self._get_uid() if self._scan() else None
