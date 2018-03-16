@@ -16,7 +16,7 @@ class StatusNotSuccessError(Exception):
 
 
 class MFRC522:
-    NRSTPD = 22
+    reset_pin = 22
 
     MAX_LEN = 16
 
@@ -119,8 +119,8 @@ class MFRC522:
     def __init__(self, dev='/dev/spidev0.0', spd=1000000):
         spi.openSPI(device=dev, speed=spd)
         GPIO.setmode(GPIO.BOARD)
-        GPIO.setup(22, GPIO.OUT)
-        GPIO.output(self.NRSTPD, 1)
+        GPIO.setup(self.reset_pin, GPIO.OUT)
+        GPIO.output(self.reset_pin, 1)
         self.MFRC522_Init()
 
     def MFRC522_Reset(self):
@@ -202,9 +202,6 @@ class MFRC522:
 
         self.Write_MFRC522(self.CommandReg, self.PCD_IDLE)
 
-        # while(i < len(sendData)):
-        #     self.Write_MFRC522(self.FIFODataReg, sendData[i])
-        #     i = i + 1
         for element in sendData:
             self.Write_MFRC522(self.FIFODataReg, element)
 
@@ -350,17 +347,9 @@ class MFRC522:
         buff.append(BlockAddr)
 
         # Now we need to append the authKey which usually is 6 bytes of 0xFF
-        # i = 0
-        # while(i < len(Sectorkey)):
-        #     buff.append(Sectorkey[i])
-        #     i = i + 1
-        # i = 0
         buff += Sectorkey
 
         # Next we append the first 4 bytes of the UID
-        # while(i < 4):
-        #     buff.append(serNum[i])
-        #     i = i + 1
         buff += serNum[0:4]
 
         # Now we start the authentication itself
@@ -387,11 +376,6 @@ class MFRC522:
 
         (status, backData, backLen) = self.MFRC522_ToCard(self.PCD_TRANSCEIVE, recvData)
 
-        # if not(status == self.MI_OK):
-        #     print("Error while reading!")
-        # i = 0
-        # if len(backData) == 16:
-        #     print("Sector " + str(blockAddr) + " " + str(backData))
         if not(status == self.MI_OK):
             raise StatusNotSuccessError(status)
         if len(backData) == 16:
@@ -435,7 +419,7 @@ class MFRC522:
         return data
 
     def MFRC522_Init(self):
-        GPIO.output(self.NRSTPD, 1)
+        GPIO.output(self.reset_pin, 1)
 
         self.MFRC522_Reset()
 
