@@ -12,7 +12,7 @@ from RFIDer import RFIDer
 from socket import gethostname
 from osc_basics import osc_client
 
-# specify the script's full path, this is needed when running it as a service on the Pi
+# specify the script's full path. this is needed when running script as a service on the Pi
 basepath = '/home/pi/gitbucket/MFRC522-python'
 
 
@@ -51,7 +51,11 @@ if __name__ == '__main__':
     host = '10.1.10.3'
     logger = configure_logger(get_hostname())
     client = osc_client.OSCClient(host=host)
-    rfider = RFIDer(num_devices=1)  # default to one device, can be changed to 2
+    
+    # defaults to one SPI device. RFID reader SDA <-> GPIO pin 24 on the Pi
+    # there is another SPI device available on the Pi: SDA <-> GPIO pin 26
+    # set num_devices=2 to use both. this is NOT thoroughly tested
+    rfider = RFIDer(num_devices=1)
 
     try:
         reading = True
@@ -59,7 +63,7 @@ if __name__ == '__main__':
 
         while reading:
             # we loop through the devs list even if there's only one item
-            # to support multiple readers connected to one Pi
+            # to support multiple readers connected to one Pi via SPI
             for dev in rfider.devs:
                 spi.openSPI(device=dev)
                 uid = rfider.read()
@@ -71,4 +75,5 @@ if __name__ == '__main__':
 
     except KeyboardInterrupt:
         logger.info('...user exit received...')
+        client.shutdown()
         reading = False
