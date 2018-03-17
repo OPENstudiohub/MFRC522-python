@@ -35,6 +35,13 @@ class RFIDer:
         return logger
 
     def _set_devs(self):
+        '''
+        returns a list of SPI devices to loop through when scanning for RFID cards.
+        
+        returns the default /dev/spidev0.0 unless num_devices=2, in which case it returns
+        both SPI devices on the Pi. returns a list either way to support easy looping
+        '''
+        
         return ['/dev/spidev0.0', '/dev/spidev0.1'] if self.num_devices == 2 else ['/dev/spidev0.0']
 
     def _scan(self):
