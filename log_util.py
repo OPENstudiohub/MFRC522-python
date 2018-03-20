@@ -28,7 +28,7 @@ def _get_logfile_name(basepath, hostname):
     return os.path.join(basepath, '{hostname}.log'.format(hostname=hostname))
 
 
-def get_basepath():
+def _get_basepath():
     '''
     this method of getting the script's basepath is needed when
     running the script as a systemd service on the Pi
@@ -36,13 +36,15 @@ def get_basepath():
     return os.path.dirname(os.path.realpath(__file__))
 
 
-def get_hostname():
+def _get_hostname():
     '''get hostname to use for log filename'''
     return gethostname().split('.')[0]
 
 
-def configure_logger(basepath, hostname):
+def configure_logger():
     '''read log.yaml config file to configure logging'''
+    basepath = _get_basepath()
+    hostname = _get_hostname()
 
     with open(os.path.join(basepath, 'log.yaml'), 'r') as log_conf:
         log_config = yaml.safe_load(log_conf)

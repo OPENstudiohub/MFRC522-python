@@ -10,7 +10,7 @@ from osc_basics import osc_client
 
 
 if __name__ == '__main__':
-    logger = log_util.configure_logger(log_util.get_basepath(), log_util.get_hostname())
+    logger = log_util.configure_logger()
     client = osc_client.OSCClient()
 
     # defaults to one SPI device: RFID reader SDA <-> GPIO pin 24 on the Pi
