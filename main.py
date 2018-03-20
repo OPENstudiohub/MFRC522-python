@@ -48,10 +48,9 @@ def configure_logger(hostname):
 
 
 if __name__ == '__main__':
-    host = '10.1.10.3'
     logger = configure_logger(get_hostname())
-    client = osc_client.OSCClient(host=host)
-    
+    client = osc_client.OSCClient()
+
     # defaults to one SPI device. RFID reader SDA <-> GPIO pin 24 on the Pi
     # there is another SPI device available on the Pi: SDA <-> GPIO pin 26
     # set num_devices=2 to use both. this is NOT thoroughly tested
@@ -70,7 +69,7 @@ if __name__ == '__main__':
                 spi.closeSPI()
 
                 if uid:
-                    logger.info('sending uid {} to host {}'.format(uid, host))
+                    logger.info('sending uid {} to host {}'.format(uid, client.host))
                     client.send([uid])  # osc_client expects a list
 
     except KeyboardInterrupt:
