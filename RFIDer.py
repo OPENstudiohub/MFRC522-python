@@ -2,7 +2,7 @@
 # rfid reader utility class for L300 built on MFRC522-python:
 # https://github.com/mxgxw/MFRC522-python
 # 3/9/18
-# updated 3/15/18
+# updated 3/20/18
 
 import logging
 import RPi.GPIO as GPIO
@@ -37,11 +37,11 @@ class RFIDer:
     def _set_devs(self):
         '''
         returns a list of SPI devices to loop through when scanning for RFID cards.
-        
+
         returns the default /dev/spidev0.0 unless num_devices=2, in which case it returns
         both SPI devices on the Pi. returns a list either way to support easy looping
         '''
-        
+
         return ['/dev/spidev0.0', '/dev/spidev0.1'] if self.num_devices == 2 else ['/dev/spidev0.0']
 
     def _scan(self):
