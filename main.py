@@ -6,12 +6,12 @@
 import spi
 import log_util
 from RFIDer import RFIDer
-from osc_basics import osc_client
+from osc_basics import osc_basics
 
 
 if __name__ == '__main__':
     logger = log_util.configure_logger()
-    client = osc_client.OSCClient()
+    client = osc_basics.OSCClient()
 
     # defaults to one SPI device: RFID reader SDA <-> GPIO pin 24 on the Pi
     # there is another SPI device available on the Pi: SDA <-> GPIO pin 26
@@ -31,7 +31,7 @@ if __name__ == '__main__':
                 spi.closeSPI()
 
                 if uid:
-                    logger.info('sending uid {} to host {}'.format(uid, client.host))
+                    logger.info('sending uid {} to host {} on port {}'.format(uid, client.host, client.port))
                     client.send([uid])  # osc_client expects a list
 
     except KeyboardInterrupt:
